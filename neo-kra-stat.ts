@@ -1,16 +1,13 @@
-#!/usr/bin/env node
-
-
 import path from 'path'
-import { readFileSync, cpSync, readdirSync } from 'fs'
-import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
+import { homedir } from 'os'
+import { KRA_HISTORY_PATH } from './Constants'
 
 export function dayKraStats(): Record<string, number> {
 
     const DAY_DURATION = 24 * 60 * 60 * 1000
 
-    const HISTORY_PATH = path.join('C:/Users/Administrator', '.kra_history', 'history')
-    const fileContent = readFileSync(HISTORY_PATH).toString('utf-8')
+    const fileContent = readFileSync(KRA_HISTORY_PATH).toString('utf-8')
 
     const datas = fileContent.split(/\r?\n/).map(x => x.trim()).filter(x => x && x !== '').map(x => {
         const xs = x.split('##')

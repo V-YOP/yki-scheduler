@@ -1,6 +1,12 @@
 import win32clipboard
 import base64
 import json
+import hashlib
+
+def md5(bytes):
+    md5 = hashlib.md5()
+    md5.update(bytes)
+    return md5.hexdigest()
 
 clipboard_type_map = {
     win32clipboard.CF_UNICODETEXT: "TEXT",
@@ -53,20 +59,24 @@ clipboard_data = get_clipboard_data()
 if clipboard_data[0] == 'TEXT':
     print(json.dumps({
         'type': 'TEXT',
-        'data': clipboard_data[1]
+        'data': clipboard_data[1],
+        'md5': md5(clipboard_data[1].encode('utf-8'))
     }))
 elif clipboard_data[0] == 'IMAGE':
     print(json.dumps({
         'type': 'IMAGE',
-        'data': base64.b64encode(clipboard_data[1]).decode('utf-8')
+        'data': base64.b64encode(clipboard_data[1]).decode('utf-8'),
+        'md5': md5(clipboard_data[1])
     }))
 elif clipboard_data[0] == 'FILE_LIST':
     print(json.dumps({
         'type': 'FILE_LIST',
-        'data': clipboard_data[1]
+        'data': clipboard_data[1],
+        'md5': md5(''.join(clipboard_data[1]).encode('utf-8'))
     }))
 else:
     print(json.dumps({
         'type': 'UNKNOWN',
-        'data': None
+        'data': None,
+        'md5': -1,
     }))

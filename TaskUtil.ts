@@ -25,7 +25,6 @@ export function mkTask<State>(
                         type: 'skip', data: null
                     }
                 }
-
                 if (!state) {
                     state = await init(logger)
                     return {
@@ -38,8 +37,13 @@ export function mkTask<State>(
                         type: 'skip', data: null
                     }
                 }
-                logger.log('start running')
-                const [result, neoState] = await body(logger, state);
+                const body_ = await body(logger, state);
+                if (!body_) {
+                    return {
+                        type: 'skip', data: null
+                    }
+                }
+                const [result, neoState] = body_;
                 neoState && (state = neoState);
                 return result as TaskResult
             } catch (e) {

@@ -3,6 +3,7 @@
     "start": "node ./dist/ScheduleHelper.js restart"
   },
   "dependencies": {
+    "bmp-ts": "^1.0.9",
     "node-notifier": "^10.0.1"
   },
   "devDependencies": {
