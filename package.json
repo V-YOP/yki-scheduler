@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "start": "node ./dist/ScheduleHelper.js restart"
+  },
+  "dependencies": {
+    "node-notifier": "^10.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/node-notifier": "^8.0.5"
+  }
+}
