@@ -69,7 +69,6 @@ async function saveImage(img) {
     cp.stdin?.write(imgBuffer)
     cp.stdin?.end()
   })
-  await writeFile(path.resolve(PIC_SAVE_PATH, `${md5}.bmp`), imgBuffer)
 
   const time2 = +new Date()
   return [time1 - time0, time2 - time1]
@@ -100,9 +99,9 @@ module.exports = mkTask(
     }
 
     logger.log(`Clipboard changed: ${clipboard.md5}:${clipboard.type}, parseTime: ${endTime - startTime} ms`)
-    if (clipboard.type === 'TEXT' || clipboard.type === 'FILE_LIST') {
-      logger.log(`Clipboard content: ${clipboard.data}`)
-    }
+    // if (clipboard.type === 'TEXT' || clipboard.type === 'FILE_LIST') {
+    //   logger.log(`Clipboard content: ${clipboard.data}`)
+    // }
 
     if (clipboard.type === 'IMAGE') {
       logger.log(`start writing picture from clipboard...`)
