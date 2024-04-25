@@ -91,6 +91,7 @@ async function work() {
       notifier.notify({
         title: '掰掰',
         message: 'Scheduler 已退出',
+        time: 1000,
       }, () => {
         process.exit(0);
       })

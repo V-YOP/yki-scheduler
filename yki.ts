@@ -127,3 +127,22 @@ export function randonItem<T>(arr: T[]): T | undefined {
     }
     return arr[Math.floor(Math.random() * arr.length)]
 }
+
+export function mkSemaphare(count = 1) {
+    const cbs: (() => void)[] = []
+    return {
+        wait: () => new Promise(resolve => {
+            if (count > 0) {
+                resolve(null)
+                count--
+            } else {
+                cbs.push(() => resolve((null)))
+            }
+        }),
+        signal: () => {
+            count++
+            const cb = cbs.shift()
+            cb && cb()
+        }
+    }
+}

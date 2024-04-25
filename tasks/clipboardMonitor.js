@@ -2,114 +2,176 @@ const notifier = require('node-notifier')
 const { mkTask } = require('../dist/TaskUtil')
 const yki = require('../dist/yki')
 const { PIC_SAVE_PATH, BASE_PATH } = require('../dist/Constants')
-const { spawn } = require('child_process')
+const { spawn, execSync } = require('child_process')
 const path = require('path')
-const { writeFile } = require('fs/promises')
-/** @type {import('../dist/Constants').Logger} */
+const { writeFile, readdir, cp } = require('fs/promises')
+const { title } = require('process')
+const { readdirSync } = require('fs')
+const { mkClipboard } = require('../dist/Clipboard')
+const { homedir } = require('os')
+
+/** @typedef {import('../dist/Constants').Logger} Logger */
+/** @typedef {import('../dist/Clipboard').Clipboard} Clipboard */
+
+/** @type Logger */
 let logger
 
+
 /**
- * @typedef {{
- *   type: 'TEXT',
- *   data: string,
- *   md5: string,
- * } | {
- *   type: 'IMAGE',
- *   data: string,
- *   md5: string,
- * } | {
- *   type: 'FILE_LIST',
- *   data: string[],
- *   md5: string,
- * } | {
- *   type: 'UNKNOWN'
- * }} Clipboard
+ * @type {() => Promise<void>}
  */
-
-/** @type {() => Promise<Clipboard>} */
-function readClipboard() {
-  return new Promise(resolve => {
-    const cp = spawn('python', [path.resolve(BASE_PATH, 'dumpClipboard.py')], { shell: false, detached: true, windowsHide: true })
-
-    let combinedOutput = ''; // 用于保存组合后的输出
-    cp.stdout.on('data', data => {
-      combinedOutput += data.toString()
-    })
-    cp.on('close', code => {
-      if (code !== 0) {
-        resolve({ type: 'UNKNOWN' })
-        return
-      }
-      try {
-        resolve(JSON.parse(combinedOutput))
-      } catch (e) {
-        resolve({ type: 'UNKNOWN' })
-      }
-    })
+async function onImage() {
+  const histrories = clipboard.histories()
+  const data = histrories[0]
+  const filePath = `${PIC_SAVE_PATH}/${+new Date()}.png`
+  const imgBuffer = data.data
+  await writeFile(filePath, imgBuffer)
+  notifier.notify({
+    title: 'picture saved',
+    message: filePath,
+    sound: false,
+    icon: filePath,
+    time: 1500,
+  }, (e, r, m) => {
+    if (r === 'activate') {
+      execSync(`start ${PIC_SAVE_PATH}`)
+    }
   })
 }
 
-/** @type {(img: Clipboard) => Promise<[number, number]>} */
-async function saveImage(img) {
-  if (img.type !== 'IMAGE') {
+/**
+ * @type {() => Promise<void>}
+ */
+async function onCommand() {
+  const histrories = clipboard.histories()
+  const data = histrories[0]
+  if (data.type !== 'TEXT') {
     throw new Error('Impossible')
   }
+  const s = data.data.trim().split(/\r?\n/)
+  const [cmdStr, ...textStr] = s
+  const cmd = cmdStr.replace('##', '').replace('---', '').replace('///', '').trim()
 
-  const {data, md5} = img
-  const time0 = +new Date()
-  const imgBuffer = Buffer.from(data, 'base64')
+  let text = ''
+  if (textStr.length === 0) {
+    logger.log(`cmd: ${cmd}, no text`)
+    text = ''
+  } else {
+    text = textStr.join('\n').trim() 
+    logger.log(`cmd: ${cmd}, text: ${text}`)
+  }
 
-  const time1 = +new Date()
-  const resultPath = path.resolve(PIC_SAVE_PATH, `${md5}.png`)
-  await new Promise(resolve => {
-    const cp = spawn('magick', ['convert', '-', resultPath], { shell: false, detached: true, windowsHide: true })
-    cp.on('close', () => {
-      resolve()
+  if (cmd.toUpperCase() === 'PING') {
+    notifier.notify({
+      title: 'PONG',
+      message: text === '' ? 'NO CONTENT' : text,
     })
-    cp.stdin?.write(imgBuffer)
-    cp.stdin?.end()
-  })
-
-  const time2 = +new Date()
-  return [time1 - time0, time2 - time1]
+  } else if (cmd.toUpperCase() === 'KRASTAT') {
+    execSync(`node ${homedir}/.kra_history/neo-kra-stat`)
+  } else if (cmd.toUpperCase() === 'TMP') {
+    execSync(`start D:/DESKTOP/TMP`)
+  } else if (cmd.toUpperCase() === 'TOTMP') {
+    const histrories = clipboard.histories()
+    if (histrories.length === 0 || histrories[1].type !== 'FILE_LIST') {
+      notifier.notify({
+        title: 'to tmp',
+        message: 'last clipboard data not file list'
+      })
+      return
+    }
+    const fileList = histrories[1].data 
+    if (fileList.map(x=>x.replace(/\\/g, '/')).some(x=>x.startsWith('D:/DESKTOP/TMP/'))) {
+      notifier.notify({
+        title: 'to tmp',
+        message: 'skip'
+      })
+      return
+    }
+    
+    const names = await Promise.all(fileList.map(async filePath => {
+      const name = path.basename(filePath)
+      await cp(filePath, `D:/DESKTOP/TMP/${name}`, {force: true, recursive: true})
+      return name
+    }))
+    notifier.notify({
+      title: 'to tmp',
+      message: names.filter(x=>x).join(', ')
+    }, (e, r)  => {
+      if (r === 'activate') {
+        execSync(`start D:/DESKTOP/TMP`)
+      }
+    })
+  }
 }
+
+/**
+ * @type {() => Promise<void>}
+ */
+async function onText() {
+  // do nothing
+}
+
+/**
+ * @type {() => Promise<void>}
+ */
+async function onFileList() {
+  // do nothing
+}
+
+/**
+ * @type {(s: string) => boolean}
+ */
+function containsCmd(s) {
+  s = s.trimStart()
+  return s.startsWith('---') || s.startsWith('##') || s.startsWith('///')
+}
+
+const clipboard = mkClipboard(10)
 
 module.exports = mkTask(
   '剪切板监听',
-  logger_ => {
+  async logger_ => {
     logger = logger_
-    logger.log('init')
+    logger_.log('init')
     return {
       lastExecuteTime: new Date(),
-      lastMd5s: new Set([-1]),
+      lastMd5: -1,
     }
   },
 
   (logger, state) => {
-    return state.lastExecuteTime.getSeconds() !== new Date().getSeconds()
+    return +new Date() - +state.lastExecuteTime > 300
   },
 
   async (logger, state) => {
     state.lastExecuteTime = new Date()
     const startTime = +new Date()
-    const clipboard = await readClipboard()
+    const data = await clipboard.read()
     const endTime = +new Date()
-    if (state.lastMd5s.has(clipboard.md5)) {
+    if (state.lastMd5 === data.md5) {
       return 
     }
 
-    logger.log(`Clipboard changed: ${clipboard.md5}:${clipboard.type}, parseTime: ${endTime - startTime} ms`)
-    // if (clipboard.type === 'TEXT' || clipboard.type === 'FILE_LIST') {
-    //   logger.log(`Clipboard content: ${clipboard.data}`)
+    logger.log(`Clipboard changed: ${data.md5}:${data.type}, parseTime: ${endTime - startTime} ms`)
+    // if (data.type === 'TEXT' || data.type === 'FILE_LIST') {
+    //   logger.log(`Clipboard content: ${data.data}`)
     // }
 
-    if (clipboard.type === 'IMAGE') {
-      logger.log(`start writing picture from clipboard...`)
-      const [readBase64Time, writeFileTime] = await saveImage(clipboard)
-      logger.log(`writing picture done. readBase64 cost: ${readBase64Time} ms, parseAndWrite cost: ${writeFileTime} ms`)
+    if (data.type === 'IMAGE') {
+      await onImage()
+    } else if (data.type === 'FILE_LIST') {
+      await onFileList()
+    } else if (data.type === 'TEXT') {
+      if (containsCmd(data.data)) {
+        await onCommand()
+      } else {
+        await onText()
+      }
+    } else {
+      // do nothing
     }
 
-    state.lastMd5s.add(clipboard.md5)
+    state.lastMd5 = data.md5
     return [{
       type: 'success', data: 'done'
     }]
