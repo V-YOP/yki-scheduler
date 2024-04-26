@@ -1,5 +1,5 @@
 const notifier = require('node-notifier')
-const { mkTask } = require('../dist/TaskUtil')
+const { mkTask, mkCronTask } = require('../dist/TaskUtil')
 const yki = require('../dist/yki')
 const { dayKraStats } = require('../dist/neo-kra-stat') 
 const { randomIcon } = require('../dist/Constants')
@@ -46,19 +46,13 @@ const MSG = {
     23: () => '画了吗？',
 }
 
-module.exports = mkTask(
+module.exports = mkCronTask(
     '准点横幅提醒',
+    '0 * * * *',
     logger => {
         logger.log('init')
-        return {
-            lastExecuteTime: new Date(),
-        }
+        return {}
     },
-
-    (logger, state) => {
-        return state.lastExecuteTime.getHours() !== new Date().getHours()
-    },
-
     (logger, state) => {
         const dayRecords = dayKraStats()
         const today = Math.floor((dayRecords[yki.dayKey(yki.getBelongDate(new Date()))] ?? 0))
@@ -70,6 +64,6 @@ module.exports = mkTask(
         })
         return [{
             type: 'success', data: `execute at ${new Date().$let(yki.hhMM)}`
-        }, {lastExecuteTime: new Date()}]
+        }, {}]
     }
 )

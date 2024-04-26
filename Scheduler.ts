@@ -3,6 +3,7 @@ import { join } from "path";
 import { PID_FILE, TASK_DIR, TASK_INTERVAL, Task, mkLogger } from "./Constants";
 import notifier from 'node-notifier'
 import http from 'http'
+import { type IntervalTask } from "./TaskUtil";
 const logger = mkLogger('SCHEDULER')
 logger.log('nihao')
 
@@ -18,7 +19,7 @@ function getTasks() {
   }
   const tasks: Task[] = taskFiles.flatMap(name => {
     const filePath = join(TASK_DIR, name)
-    let task;
+    let task: IntervalTask;
     try {
       task = require(filePath)
     } catch (error) {

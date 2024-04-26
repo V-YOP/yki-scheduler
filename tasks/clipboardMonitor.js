@@ -9,6 +9,7 @@ const { title } = require('process')
 const { readdirSync } = require('fs')
 const { mkClipboard } = require('../dist/Clipboard')
 const { homedir } = require('os')
+const { toggleTheme } = require('../dist/Util')
 
 /** @typedef {import('../dist/Constants').Logger} Logger */
 /** @typedef {import('../dist/Clipboard').Clipboard} Clipboard */
@@ -101,6 +102,8 @@ async function onCommand() {
         execSync(`start D:/DESKTOP/TMP`)
       }
     })
+  } else if (cmd.toUpperCase() === 'THEME') {
+    toggleTheme()
   }
 }
 

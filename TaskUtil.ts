@@ -1,15 +1,17 @@
 import { notify } from "node-notifier";
 import { Logger, TaskInfo, TaskResult, mkLogger } from "./Constants";
-
+import * as cron from 'cron';
+import * as yki from './yki'
+export type IntervalTask = {
+    taskName: string,
+    taskBody: () => Promise<TaskResult>}
 
 export function mkTask<State>(
     taskName: string,
     init: (logger: Logger) => State | Promise<State>,
     p: (logger: Logger, state: State) => boolean | Promise<boolean>,
     body: (logger: Logger, state: State) => [TaskResult, State?] | Promise<[TaskResult, State?]>
-): {
-    taskName: string,
-    taskBody: () => Promise<TaskResult>} {
+): IntervalTask {
 
     let state: State | null = null
     const logger = mkLogger(taskName)
@@ -57,4 +59,34 @@ export function mkTask<State>(
             }
         }}
 
+}
+
+
+export function mkCronTask<State>(
+    taskName: string,
+    cronExpr: string, 
+    init: (logger: Logger) => State | Promise<State>,
+    body: (logger: Logger, state: State) => [TaskResult, State?] | Promise<[TaskResult, State?]>
+): IntervalTask {
+    // assert cronExpr is valid
+    cron.sendAt(cronExpr)
+
+    let nextScheduleTime = new Date(0)
+    return mkTask(
+        taskName,
+        logger => {
+            nextScheduleTime = cron.sendAt(cronExpr).toJSDate()
+            logger.log(`cron task inited, cron: ${cronExpr}, nextScheduleTime: ${yki.yyyyMMDDHHmmss(nextScheduleTime)}`)
+            return init(logger)
+        },
+        (logger) => {
+            if (+new Date() > +nextScheduleTime) {
+                nextScheduleTime = cron.sendAt(cronExpr).toJSDate()
+                logger.log(`scheduled, cron: ${cronExpr}, nextScheduleTime: ${yki.yyyyMMDDHHmmss(nextScheduleTime)}`)
+                return true
+            }
+            return false
+        },
+        body
+    )
 }

@@ -1,27 +1,22 @@
 const notifier = require('node-notifier')
-const { mkTask } = require('../dist/TaskUtil')
+const { mkTask, mkCronTask } = require('../dist/TaskUtil')
 const yki = require('../dist/yki')
 const { dayKraStats } = require('../dist/neo-kra-stat') 
 const { randomIcon } = require('../dist/Constants')
 
 const MILESTONES = [10, 30, 45, 60, 90, 120, 150, 180, 240, 320, 480, 9999999]
 
-module.exports = mkTask(
+module.exports = mkCronTask(
     '本日绘画时间里程碑',
+    '* * * * *',
     logger => {
         logger.log('init')
         return {
-            lastExecuteTime: new Date(), 
             lastDisplayedMileStoneIdx: -1, 
         }
     },
 
     (logger, state) => {
-        return state.lastExecuteTime.getMinutes() !== new Date().getMinutes()
-    },
-
-    (logger, state) => {
-        state.lastExecuteTime = new Date()
         const dayRecords = dayKraStats()
         const today = Math.floor((dayRecords[yki.dayKey(yki.getBelongDate(new Date()))] ?? 0))
         // logger.log(JSON.stringify(dayRecords))
@@ -60,4 +55,3 @@ module.exports = mkTask(
         }]
     }
 )
-

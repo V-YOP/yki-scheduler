@@ -30,9 +30,6 @@ export type ClipboardUnknownData = {
   md5: string,
 }
 
-
-type UnionToTuple<T> = T extends infer X | infer XS ? [X] : [];
-
 type ClipboardDataTuple = [ClipboardTextData, ClipboardImageData, ClipboardFileListData, ClipboardUnknownData]
 
 export type ClipboardData = ClipboardDataTuple[number]

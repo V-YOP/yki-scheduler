@@ -103,6 +103,11 @@ export function getBelongDate(date: Date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
+/**
+ * convert date to 'yyMMdd' pattern 
+ * @param date 
+ * @returns 
+ */
 export function dayKey(date: Date) {
     const year = date.getFullYear().toString().substring(2)
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
