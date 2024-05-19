@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "node ./dist/ScheduleHelper.js restart"
+    "start": "node ./dist/ScheduleHelper.js restart",
+    "stop": "node ./dist/ScheduleHelper.js stop"
   },
   "dependencies": {
     "bmp-ts": "^1.0.9",

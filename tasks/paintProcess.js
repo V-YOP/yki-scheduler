@@ -4,7 +4,7 @@ const yki = require('../dist/yki')
 const { dayKraStats } = require('../dist/neo-kra-stat') 
 const { randomIcon } = require('../dist/Constants')
 
-const MILESTONES = [10, 30, 45, 60, 90, 120, 150, 180, 240, 320, 480, 9999999]
+const MILESTONES = [10, 30, 45, 60, 75, 100, 120, 150, 180, 240, 320, 480, 9999999]
 
 module.exports = mkCronTask(
     '本日绘画时间里程碑',

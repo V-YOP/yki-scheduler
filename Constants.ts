@@ -6,7 +6,7 @@ import path from "path";
 
 export const TASK_INTERVAL = 100;
 
-export const PIC_SAVE_PATH = `D:\\DESKTOP\\PIC_ASSETs\\UN_TAGGED\\CLIPBOARD`
+export const PIC_SAVE_PATH = `D:\\DESKTOP\\TMP\\CLIPBOARD`
 
 export const KRA_HISTORY_PATH = path.resolve(homedir(), '.kra_history', 'history')
 export const BASE_PATH = `${homedir()}/.yki_scheduler`;

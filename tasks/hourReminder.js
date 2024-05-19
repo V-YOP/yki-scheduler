@@ -57,11 +57,19 @@ module.exports = mkCronTask(
         const dayRecords = dayKraStats()
         const today = Math.floor((dayRecords[yki.dayKey(yki.getBelongDate(new Date()))] ?? 0))
 
-        notifier.notify({
-            title: '准点报时！',
-            message: `${new Date().$let(yki.hhMM)} 了！${msg(today, new Date().getHours())}`,
-            icon: randomIcon('happy')
-        })
+        if (new Date().getHours() >= 1 && new Date().getHours() <= 6) {
+            notifier.notify({
+                title: '滚去睡觉！',
+                message: `${msg(today, new Date().getHours())}，但该去睡觉了`,
+                icon: randomIcon('happy')
+            })
+        } else {
+            notifier.notify({
+                title: '准点报时！',
+                message: `${new Date().$let(yki.hhMM)} 了！${msg(today, new Date().getHours())}`,
+                icon: randomIcon('happy')
+            })
+        }
         return [{
             type: 'success', data: `execute at ${new Date().$let(yki.hhMM)}`
         }, {}]

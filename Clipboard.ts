@@ -9,6 +9,7 @@ export type ClipboardTextData = {
   type: 'TEXT',
   data: string,
   md5: string,
+  seq_id: number,
 }
 
 export type ClipboardImageData = {
@@ -16,18 +17,22 @@ export type ClipboardImageData = {
   /**
    * 图像内容 Buffer
    */
-  data: Buffer,   md5: string,
+  data: Buffer,   
+  md5: string,
+  seq_id: number,
 }
 
 export type ClipboardFileListData = {
   type: 'FILE_LIST',
   data: string[],
   md5: string,
+  seq_id: number,
 }
 
 export type ClipboardUnknownData = {
   type: 'UNKNOWN',
   md5: string,
+  seq_id: number,
 }
 
 type ClipboardDataTuple = [ClipboardTextData, ClipboardImageData, ClipboardFileListData, ClipboardUnknownData]
@@ -36,7 +41,7 @@ export type ClipboardData = ClipboardDataTuple[number]
 
 export type Clipboard = {
   historySize: () => number,
-  read: () => Promise<ClipboardData>,
+  read: (seqId?: number) => Promise<ClipboardData>,
   writeText: (text: string) => Promise<boolean>,
   writeImage: (img: Buffer) => Promise<boolean>
   histories: () => ClipboardData[],
@@ -52,8 +57,8 @@ export function mkClipboard(historySize: number = 10): Clipboard {
   }
   return {
     historySize: () => historySize,
-    read: async () => {
-      const data = await readClipboard()
+    read: async (seqId) => {
+      const data = await readClipboard(seqId)
       appendHistory(data)
       return data
     },
@@ -116,10 +121,10 @@ export async function dibToPng(dibBuffer: Buffer): Promise<Buffer> {
 
 
 const mutex = mkSemaphare(1)
-async function readClipboardRaw(): Promise<unknown> {
+async function readClipboardRaw(seqId?: number): Promise<unknown> {
   return new Promise(async resolve => {
     await mutex.wait()
-    const cp = spawn('python', [path.resolve(BASE_PATH, 'dumpClipboard.py')], { shell: false, detached: true, windowsHide: true })
+    const cp = spawn('python', [path.resolve(BASE_PATH, 'dumpClipboard.py'), ...(seqId ? [''+seqId] : [])], { shell: false, detached: true, windowsHide: true })
 
     let combinedOutput = ''; // 用于保存组合后的输出
     cp.stdout.on('data', data => {
@@ -140,15 +145,16 @@ async function readClipboardRaw(): Promise<unknown> {
   })
 }
 
-export async function readClipboard(): Promise<ClipboardData> {
-  const raw = await readClipboardRaw()
+export async function readClipboard(seqId?: number): Promise<ClipboardData> {
+  const raw = await readClipboardRaw(seqId)
   const type: ClipboardData['type'] = (raw as any).type
   if (type === 'IMAGE') {
     const data = await dibToPng(Buffer.from((raw as any).data, 'base64'))
     return {
       type: 'IMAGE',
       data,
-      md5: (raw as any).md5
+      md5: (raw as any).md5,
+      seq_id: (raw as any).seq_id,
     }
   }
   return raw as ClipboardData

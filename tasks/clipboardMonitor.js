@@ -139,6 +139,7 @@ module.exports = mkTask(
     return {
       lastExecuteTime: new Date(),
       lastMd5: -1,
+      lastSeqId: -1,
     }
   },
 
@@ -149,9 +150,9 @@ module.exports = mkTask(
   async (logger, state) => {
     state.lastExecuteTime = new Date()
     const startTime = +new Date()
-    const data = await clipboard.read()
+    const data = await clipboard.read(state.lastSeqId)
     const endTime = +new Date()
-    if (state.lastMd5 === data.md5) {
+    if (state.lastMd5 === data.md5 || data.seq_id === -1) {
       return 
     }
 
@@ -175,6 +176,7 @@ module.exports = mkTask(
     }
 
     state.lastMd5 = data.md5
+    state.lastSeqId = data.seq_id
     return [{
       type: 'success', data: 'done'
     }]
