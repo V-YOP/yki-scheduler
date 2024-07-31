@@ -1,0 +1,5 @@
+import {cd, cat, cp, which, exec, echo, chmod, config, exit, ls, dirs, env, error, uniq, touch, test, mkdir, tempdir, tail, sort, set, sed, rm, pwd, pushd, popd, find, grep, head, ln, mv} from 'shelljs'
+
+cd(__dirname)
+
+// show me your dream

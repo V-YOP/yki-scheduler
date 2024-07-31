@@ -1,0 +1,4 @@
+SNIPPET 名称 LANG=js #标签A #标签X
+
+// 第一行是元信息，剩下的包括这一行都是代码，编辑完毕后关闭该文件即可
+console.log("Hello, World!")
