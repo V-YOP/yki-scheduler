@@ -11,17 +11,18 @@ function threshold(msgThresholdArr) {
 }
 
 function msg(todaySum, nowHour) {
-    if (nowHour === 0) {
-        return `本日绘画时间：${todaySum} 分钟，` + threshold(
-            [['丫的没画？', 0],
-            ['待改善', 30],
-            ['稍微画了点', 60],
-            ['再加把劲！', 90],
-            ['打卡成功！！', 120],
-            ['牛逼！', 180]]
-        )(todaySum)
-    }
-    return todaySum === 0 ? `当前还未动笔` : `当前绘画时间：${todaySum} 分钟`
+    return '活动一下！休息一下眼睛！'
+    // if (nowHour === 0) {
+    //     return `本日绘画时间：${todaySum} 分钟，` + threshold(
+    //         [['丫的没画？', 0],
+    //         ['待改善', 30],
+    //         ['稍微画了点', 60],
+    //         ['再加把劲！', 90],
+    //         ['打卡成功！！', 120],
+    //         ['牛逼！', 180]]
+    //     )(todaySum)
+    // }
+    // return todaySum === 0 ? `当前还未动笔` : `当前绘画时间：${todaySum} 分钟`
 }
 
 const MSG = {
@@ -48,7 +49,7 @@ const MSG = {
 
 module.exports = mkCronTask(
     '准点横幅提醒',
-    '0 * * * *',
+    '0,30 * * * *',
     logger => {
         logger.log('init')
         return {}
